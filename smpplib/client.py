@@ -291,6 +291,15 @@ class Client(object):
         dsmr.sequence = pdu.sequence
         self.send_pdu(dsmr)
 
+    def _data_received(self, pdu):
+        """Handler for received data message event"""
+        status = self.message_received_handler(pdu=pdu)
+        if status is None:
+            status = consts.SMPP_ESME_ROK
+        dsmr = smpp.make_pdu('data_sm_resp', client=self, status=status)
+        dsmr.sequence = pdu.sequence
+        self.send_pdu(dsmr)        
+        
     def _enquire_link_received(self, pdu):
         """Response to enquire_link"""
         ler = smpp.make_pdu('enquire_link_resp', client=self)
@@ -371,6 +380,8 @@ class Client(object):
                 self.message_sent_handler(pdu=pdu)
             elif pdu.command == 'deliver_sm':
                 self._message_received(pdu)
+            elif pdu.command == 'data_sm':
+                self._data_received(pdu)                
             elif pdu.command == 'query_sm_resp':
                 self.query_resp_handler(pdu)
             elif pdu.command == 'enquire_link':
